@@ -16,12 +16,28 @@ import {
 } from 'three/examples/jsm/controls/OrbitControls.js';
 import { CutBlock } from './geometry/CutBlock';
 
+type Range = [number, number];
+
+type GridConfig = {
+    size: Range;
+};
+
+type BlockConfig = {
+    baseHeightRange: Range;
+    size: Range;
+    cutAngleRange: Range;
+    cornerCutRatio: number;
+};
+
 class Renderer {
     scene: Scene;
     camera: PerspectiveCamera;
     renderer: WebGLRenderer;
     resizeObserver: ResizeObserver;
     controls: OrbitControls;
+
+    blockMaterial: MeshPhysicalMaterial;
+    blocks: Mesh[] = [];
 
     animationFrameId: number;
     needsRender: boolean = true;
@@ -86,7 +102,7 @@ class Renderer {
         dirLight.position.set(-20, 20, -20);
         dirLight.lookAt(new Vector3());
 
-        const material = new MeshPhysicalMaterial({ color: 0xffffff, side: DoubleSide });
+        this.blockMaterial = new MeshPhysicalMaterial({ color: 0xffffff });
 
         new CubeTextureLoader()
             .setPath('resources/skydome/')
@@ -99,7 +115,7 @@ class Renderer {
                 'nz.jpg'
             ], (data) => {
                 this.scene.background = data;
-                material.envMap = data;
+                this.blockMaterial.envMap = data;
                 hemispherelight.intensity = 1;
                 this.needsRender = true;
             });
@@ -107,18 +123,45 @@ class Renderer {
         this.scene.add(hemispherelight);
         this.scene.add(dirLight);
 
-        const gridWidth = 10;
-        const gridHeight = 20;
+        this.configureGrid(
+            {
+                size: [10, 20]
+            },
+            {
+                baseHeightRange: [0.1, 0.1],
+                cutAngleRange: [15, 30],
+                cornerCutRatio: 0,
+                size: [1, 1],
+            }
+        );
+
+        this.camera.position.set(10, 10, 15);
+        this.camera.lookAt(new Vector3());
+    }
+
+    configureGrid(gridConfig: GridConfig, blockConfig: BlockConfig) {
+        const NUM_BUCKETS = 4;
+        const random = (range: Range) => {
+            const bucket = Math.floor(Math.random() * NUM_BUCKETS);
+            const t = bucket / NUM_BUCKETS;
+
+            return t * (range[1] - range[0]) + range[0];
+        };
+
+        const [gridWidth, gridHeight] = gridConfig.size;
         for (let x = 0; x < gridWidth; x++) {
             for (let z = 0; z < gridHeight; z++) {
                 const geometry = new CutBlock({
-                    baseHeight: 0.1,
-                    cutAngle: Math.random() * 20 + 15,
+                    baseHeight: random(blockConfig.baseHeightRange),
+                    cutAngle: random(blockConfig.cutAngleRange),
+                    cutType: Math.random() < blockConfig.cornerCutRatio ? 'corner' : 'edge',
+                    width: blockConfig.size[0],
+                    depth: blockConfig.size[1],
                 });
-                const block = new Mesh(geometry, material);
+                const block = new Mesh(geometry, this.blockMaterial);
 
-                block.position.x = x - gridWidth / 2;
-                block.position.z = z - gridHeight / 2;
+                block.position.x = (x - gridWidth / 2) * blockConfig.size[0];
+                block.position.z = (z - gridHeight / 2) * blockConfig.size[1];
 
                 // Rotation
                 const turns = Math.floor(Math.random() * 4);
@@ -127,12 +170,19 @@ class Renderer {
                 this.scene.add(block);
             }
         }
+    }
 
-        this.camera.position.z = 5;
+    disposeCutBlocks() {
+        this.blocks.forEach(block => block.geometry.dispose());
     }
 
     destroy() {
         this.resizeObserver.disconnect();
+
+        this.disposeCutBlocks();
+        this.blockMaterial.envMap.dispose();
+        this.blockMaterial.dispose();
+
         this.renderer.dispose();
         cancelAnimationFrame(this.animationFrameId);
     }
