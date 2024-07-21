@@ -7,7 +7,6 @@ import {
     MeshPhysicalMaterial,
     HemisphereLight,
     CubeTextureLoader,
-    DoubleSide,
     Vector3,
     DirectionalLight,
 } from 'three';
@@ -18,13 +17,12 @@ import { CutBlock } from './geometry/CutBlock';
 
 type Range = [number, number];
 
-type GridConfig = {
+export type GridConfig = {
     size: Range;
 };
 
-type BlockConfig = {
+export type BlockConfig = {
     baseHeightRange: Range;
-    size: Range;
     cutAngleRange: Range;
     cornerCutRatio: number;
 };
@@ -131,7 +129,6 @@ class Renderer {
                 baseHeightRange: [0.1, 0.1],
                 cutAngleRange: [15, 30],
                 cornerCutRatio: 0,
-                size: [1, 1],
             }
         );
 
@@ -140,6 +137,8 @@ class Renderer {
     }
 
     configureGrid(gridConfig: GridConfig, blockConfig: BlockConfig) {
+        this.disposeCutBlocks();
+
         const NUM_BUCKETS = 4;
         const random = (range: Range) => {
             const bucket = Math.floor(Math.random() * NUM_BUCKETS);
@@ -149,31 +148,40 @@ class Renderer {
         };
 
         const [gridWidth, gridHeight] = gridConfig.size;
+        this.blocks = new Array(gridWidth * gridHeight);
         for (let x = 0; x < gridWidth; x++) {
             for (let z = 0; z < gridHeight; z++) {
                 const geometry = new CutBlock({
                     baseHeight: random(blockConfig.baseHeightRange),
                     cutAngle: random(blockConfig.cutAngleRange),
                     cutType: Math.random() < blockConfig.cornerCutRatio ? 'corner' : 'edge',
-                    width: blockConfig.size[0],
-                    depth: blockConfig.size[1],
+                    width: 1,
+                    depth: 1,
                 });
                 const block = new Mesh(geometry, this.blockMaterial);
 
-                block.position.x = (x - gridWidth / 2) * blockConfig.size[0];
-                block.position.z = (z - gridHeight / 2) * blockConfig.size[1];
+                block.position.x = (x - gridWidth / 2);
+                block.position.z = (z - gridHeight / 2);
 
                 // Rotation
                 const turns = Math.floor(Math.random() * 4);
                 block.rotateOnAxis(new Vector3(0, 1, 0), turns * Math.PI / 2);
 
                 this.scene.add(block);
+                this.blocks[x + gridWidth * z] = block;
             }
         }
+
+        this.needsRender = true;
     }
 
     disposeCutBlocks() {
-        this.blocks.forEach(block => block.geometry.dispose());
+        this.blocks.forEach(block => {
+            block.removeFromParent();
+            block.geometry.dispose()
+        });
+
+        this.blocks = [];
     }
 
     destroy() {
