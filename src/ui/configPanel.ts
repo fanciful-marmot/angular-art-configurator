@@ -4,7 +4,8 @@ import type { Renderer } from '../renderer';
 
 const createConfigPanel = (renderer: Renderer) => {
   const gridConfig = {
-    size: { x: 10, y: 20 }
+    size: { x: 30, y: 40 },
+    borderBlurDistance: 0.3,
   };
 
   const blockConfig = {
@@ -28,6 +29,12 @@ const createConfigPanel = (renderer: Renderer) => {
   gridFolder.addBinding(gridConfig, 'size', {
     x: { step: 1, min: 1, max: 100 },
     y: { step: 1, min: 1, max: 100, inverted: true },
+  });
+  gridFolder.addBinding(gridConfig, 'borderBlurDistance', {
+    label: 'blur distance',
+    min: 0,
+    max: 1,
+    step: 0.05,
   });
 
   // Block folder
@@ -54,6 +61,9 @@ const createConfigPanel = (renderer: Renderer) => {
     renderer.configureGrid(
       {
         size: [gridConfig.size.x, gridConfig.size.y],
+        borderBlurDistance: gridConfig.borderBlurDistance,
+        // colorStops: [0x424242, 0x633f30, 0x827d7a, 0xe3e1e1, 0x827d7a, 0x633f30, 0x424242],
+        colorStops: [0x22c1c3, 0x6fbf8f, 0xaebd63, 0xfdbb2d],
       },
       {
         baseHeightRange: [blockConfig.baseHeightRange.min, blockConfig.baseHeightRange.max],

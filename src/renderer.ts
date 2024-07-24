@@ -9,6 +9,8 @@ import {
     CubeTextureLoader,
     Vector3,
     DirectionalLight,
+    Material,
+    CubeTexture,
 } from 'three';
 import {
     OrbitControls
@@ -19,6 +21,8 @@ type Range = [number, number];
 
 export type GridConfig = {
     size: Range;
+    borderBlurDistance: number;
+    colorStops: number[];
 };
 
 export type BlockConfig = {
@@ -35,7 +39,8 @@ class Renderer {
     controls: OrbitControls;
 
     blockMaterial: MeshPhysicalMaterial;
-    blocks: Mesh[] = [];
+    blocks: Mesh<CutBlock, MeshPhysicalMaterial>[] = [];
+    envMap: CubeTexture | null = null;
 
     animationFrameId: number;
     needsRender: boolean = true;
@@ -100,8 +105,6 @@ class Renderer {
         dirLight.position.set(-20, 20, -20);
         dirLight.lookAt(new Vector3());
 
-        this.blockMaterial = new MeshPhysicalMaterial({ color: 0xffffff });
-
         new CubeTextureLoader()
             .setPath('resources/skydome/')
             .load([
@@ -112,8 +115,9 @@ class Renderer {
                 'pz.jpg',
                 'nz.jpg'
             ], (data) => {
+                this.envMap = data;
                 this.scene.background = data;
-                this.blockMaterial.envMap = data;
+                this.blocks.forEach(block => block.material.envMap = this.envMap);
                 hemispherelight.intensity = 1;
                 this.needsRender = true;
             });
@@ -123,7 +127,9 @@ class Renderer {
 
         this.configureGrid(
             {
-                size: [10, 20]
+                size: [10, 20],
+                colorStops: [0xffffff],
+                borderBlurDistance: 0,
             },
             {
                 baseHeightRange: [0.1, 0.1],
@@ -147,10 +153,14 @@ class Renderer {
             return t * (range[1] - range[0]) + range[0];
         };
 
+        const colorStops = gridConfig.colorStops.map(c => new Color(c));
+        const { borderBlurDistance } = gridConfig;
+
         const [gridWidth, gridHeight] = gridConfig.size;
         this.blocks = new Array(gridWidth * gridHeight);
-        for (let x = 0; x < gridWidth; x++) {
-            for (let z = 0; z < gridHeight; z++) {
+        for (let z = 0; z < gridHeight; z++) {
+            let row = [];
+            for (let x = 0; x < gridWidth; x++) {
                 const geometry = new CutBlock({
                     baseHeight: random(blockConfig.baseHeightRange),
                     cutAngle: random(blockConfig.cutAngleRange),
@@ -158,7 +168,24 @@ class Renderer {
                     width: 1,
                     depth: 1,
                 });
-                const block = new Mesh(geometry, this.blockMaterial);
+                const colorIndexF = z / gridHeight * colorStops.length;
+                let colorIndex = Math.floor(colorIndexF);
+                let distToBorder = colorIndexF - Math.round(colorIndexF);
+                if (Math.abs(distToBorder) < borderBlurDistance) {
+                    // We're close to the boundary, blend
+                    const borderBlurProbabilityCutoff = Math.min(1, (borderBlurDistance - Math.abs(distToBorder)) / borderBlurDistance + 0.6) - 0.5;
+                    const t = Math.random();
+                    if (distToBorder >= 0) {
+                        colorIndex += t < borderBlurProbabilityCutoff ? -1 : 0;
+                    } else {
+                        colorIndex += t < borderBlurProbabilityCutoff ? 1 : 0;
+                    }
+                    row.push(borderBlurProbabilityCutoff);
+                } else {
+                    row.push(0);
+                }
+                const color = colorStops[Math.max(0, Math.min(colorIndex, colorStops.length - 1))];
+                const block = new Mesh(geometry, new MeshPhysicalMaterial({ color, envMap: this.envMap }));
 
                 block.position.x = (x - gridWidth / 2);
                 block.position.z = (z - gridHeight / 2);
@@ -170,6 +197,7 @@ class Renderer {
                 this.scene.add(block);
                 this.blocks[x + gridWidth * z] = block;
             }
+            console.log(row.join(' '));
         }
 
         this.needsRender = true;
@@ -178,7 +206,8 @@ class Renderer {
     disposeCutBlocks() {
         this.blocks.forEach(block => {
             block.removeFromParent();
-            block.geometry.dispose()
+            block.geometry.dispose();
+            (block.material as Material).dispose();
         });
 
         this.blocks = [];
@@ -188,8 +217,7 @@ class Renderer {
         this.resizeObserver.disconnect();
 
         this.disposeCutBlocks();
-        this.blockMaterial.envMap.dispose();
-        this.blockMaterial.dispose();
+        this.envMap.dispose();
 
         this.renderer.dispose();
         cancelAnimationFrame(this.animationFrameId);
