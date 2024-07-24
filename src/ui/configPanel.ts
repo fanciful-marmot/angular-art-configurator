@@ -6,6 +6,10 @@ const createConfigPanel = (renderer: Renderer) => {
   const gridConfig = {
     size: { x: 30, y: 40 },
     borderBlurDistance: 0.3,
+    color1: 0x22c1c3,
+    color2: 0x6fbf8f,
+    color3: 0xaebd63,
+    color4: 0xfdbb2d,
   };
 
   const blockConfig = {
@@ -36,6 +40,10 @@ const createConfigPanel = (renderer: Renderer) => {
     max: 1,
     step: 0.05,
   });
+  gridFolder.addBinding(gridConfig, 'color1', { view: 'color' });
+  gridFolder.addBinding(gridConfig, 'color2', { view: 'color' });
+  gridFolder.addBinding(gridConfig, 'color3', { view: 'color' });
+  gridFolder.addBinding(gridConfig, 'color4', { view: 'color' });
 
   // Block folder
   const blockFolder = pane.addFolder({
@@ -63,7 +71,8 @@ const createConfigPanel = (renderer: Renderer) => {
         size: [gridConfig.size.x, gridConfig.size.y],
         borderBlurDistance: gridConfig.borderBlurDistance,
         // colorStops: [0x424242, 0x633f30, 0x827d7a, 0xe3e1e1, 0x827d7a, 0x633f30, 0x424242],
-        colorStops: [0x22c1c3, 0x6fbf8f, 0xaebd63, 0xfdbb2d],
+        // colorStops: [0x22c1c3, 0x6fbf8f, 0xaebd63, 0xfdbb2d],
+        colorStops: [gridConfig.color1, gridConfig.color2, gridConfig.color3, gridConfig.color4],
       },
       {
         baseHeightRange: [blockConfig.baseHeightRange.min, blockConfig.baseHeightRange.max],

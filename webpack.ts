@@ -72,7 +72,7 @@ if (!argv.reduce((prev, cur) => prev || cur === '--watch', false)) {
         if (stats.hasErrors()) {
             let statsJson = stats.toJson();
             console.log(
-                '❌' + ' · Error · ' + 'webgpu-seed failed to compile:'
+                '❌' + ' · Error · ' + 'failed to compile:'
             );
             for (let error of statsJson.errors) {
                 console.log(error.message);
@@ -82,7 +82,6 @@ if (!argv.reduce((prev, cur) => prev || cur === '--watch', false)) {
         console.log(
             '✔️️' +
             '  · Success · ' +
-            'webgpu-seed' +
             (isProduction ? ' (production) ' : ' (development) ') +
             'built in ' +
             (+stats.endTime - +stats.startTime + ' ms.')
@@ -95,7 +94,7 @@ if (!argv.reduce((prev, cur) => prev || cur === '--watch', false)) {
         if (stats.hasErrors()) {
             let statsJson = stats.toJson();
             console.log(
-                '❌' + ' · Error · ' + 'webgpu-seed failed to compile:'
+                '❌' + ' · Error · ' + 'failed to compile:'
             );
             for (let error of statsJson.errors) {
                 console.log(error.message);
@@ -106,7 +105,6 @@ if (!argv.reduce((prev, cur) => prev || cur === '--watch', false)) {
         console.log(
             '✔️️' +
             '  · Success · ' +
-            'webgpu-seed' +
             (isProduction ? ' (production) ' : ' (development) ') +
             'built in ' +
             (+stats.endTime - +stats.startTime + ' ms.') +
