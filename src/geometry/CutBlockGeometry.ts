@@ -16,7 +16,7 @@ const DEFAULT: Config = {
   cutType: 'edge',
 };
 
-class CutBlock extends BufferGeometry {
+class CutBlockGeometry extends BufferGeometry {
   constructor(options: Partial<Config> = {}) {
     super();
 
@@ -75,4 +75,4 @@ class CutBlock extends BufferGeometry {
   }
 }
 
-export { CutBlock };
+export { CutBlockGeometry };

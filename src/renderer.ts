@@ -15,21 +15,8 @@ import {
 import {
     OrbitControls
 } from 'three/examples/jsm/controls/OrbitControls.js';
-import { CutBlock } from './geometry/CutBlock';
-
-type Range = [number, number];
-
-export type GridConfig = {
-    size: Range;
-    borderBlurDistance: number;
-    colorStops: number[];
-};
-
-export type BlockConfig = {
-    baseHeightRange: Range;
-    cutAngleRange: Range;
-    cornerCutRatio: number;
-};
+import { CutBlockGeometry } from './geometry/CutBlockGeometry';
+import { generateGrid, GridConfig, BlockConfig } from './gridGenerator';
 
 class Renderer {
     scene: Scene;
@@ -39,7 +26,7 @@ class Renderer {
     controls: OrbitControls;
 
     blockMaterial: MeshPhysicalMaterial;
-    blocks: Mesh<CutBlock, MeshPhysicalMaterial>[] = [];
+    blocks: Mesh<CutBlockGeometry, MeshPhysicalMaterial>[] = [];
     envMap: CubeTexture | null = null;
 
     animationFrameId: number;
@@ -143,67 +130,38 @@ class Renderer {
     }
 
     configureGrid(gridConfig: GridConfig, blockConfig: BlockConfig) {
-        this.disposeCutBlocks();
+        this.disposeCutBlockGeometrys();
 
-        const NUM_BUCKETS = 4;
-        const random = (range: Range) => {
-            const bucket = Math.floor(Math.random() * NUM_BUCKETS);
-            const t = bucket / NUM_BUCKETS;
-
-            return t * (range[1] - range[0]) + range[0];
-        };
-
-        const colorStops = gridConfig.colorStops.map(c => new Color(c));
-        const { borderBlurDistance } = gridConfig;
+        const grid = generateGrid(gridConfig, blockConfig);
 
         const [gridWidth, gridHeight] = gridConfig.size;
-        this.blocks = new Array(gridWidth * gridHeight);
-        for (let z = 0; z < gridHeight; z++) {
-            let row = [];
-            for (let x = 0; x < gridWidth; x++) {
-                const geometry = new CutBlock({
-                    baseHeight: random(blockConfig.baseHeightRange),
-                    cutAngle: random(blockConfig.cutAngleRange),
-                    cutType: Math.random() < blockConfig.cornerCutRatio ? 'corner' : 'edge',
-                    width: 1,
-                    depth: 1,
-                });
-                const colorIndexF = z / gridHeight * colorStops.length;
-                let colorIndex = Math.floor(colorIndexF);
-                let distToBorder = colorIndexF - Math.round(colorIndexF);
-                if (Math.abs(distToBorder) < borderBlurDistance) {
-                    // We're close to the boundary, blend
-                    const borderBlurProbabilityCutoff = Math.min(1, (borderBlurDistance - Math.abs(distToBorder)) / borderBlurDistance + 0.6) - 0.5;
-                    const t = Math.random();
-                    if (distToBorder >= 0) {
-                        colorIndex += t < borderBlurProbabilityCutoff ? -1 : 0;
-                    } else {
-                        colorIndex += t < borderBlurProbabilityCutoff ? 1 : 0;
-                    }
-                    row.push(borderBlurProbabilityCutoff);
-                } else {
-                    row.push(0);
-                }
-                const color = colorStops[Math.max(0, Math.min(colorIndex, colorStops.length - 1))];
-                const block = new Mesh(geometry, new MeshPhysicalMaterial({ color, envMap: this.envMap }));
 
-                block.position.x = (x - gridWidth / 2);
-                block.position.z = (z - gridHeight / 2);
+        const colorStops = gridConfig.colorStops.map(c => new Color(c));
 
-                // Rotation
-                const turns = Math.floor(Math.random() * 4);
-                block.rotateOnAxis(new Vector3(0, 1, 0), turns * Math.PI / 2);
+        this.blocks = grid.blocks.map((block, i) => {
+            const geometry = new CutBlockGeometry({
+                baseHeight: block.baseHeight,
+                cutAngle: block.cutAngle,
+                cutType: block.cutType,
+                width: 1,
+                depth: 1,
+            });
+            const blockMesh = new Mesh(geometry, new MeshPhysicalMaterial({ color: colorStops[block.colorBucket], envMap: this.envMap }));
+            const z = Math.floor(i / gridWidth);
+            const x = i - z * gridWidth;
+            blockMesh.position.z = (z - gridHeight / 2);
+            blockMesh.position.x = (x - gridWidth / 2);
+            blockMesh.rotateOnAxis(new Vector3(0, 1, 0), block.turns * Math.PI / 2);
 
-                this.scene.add(block);
-                this.blocks[x + gridWidth * z] = block;
-            }
-            console.log(row.join(' '));
-        }
+            this.scene.add(blockMesh);
+
+            return blockMesh;
+        });
 
         this.needsRender = true;
     }
 
-    disposeCutBlocks() {
+    disposeCutBlockGeometrys() {
         this.blocks.forEach(block => {
             block.removeFromParent();
             block.geometry.dispose();
@@ -216,7 +174,7 @@ class Renderer {
     destroy() {
         this.resizeObserver.disconnect();
 
-        this.disposeCutBlocks();
+        this.disposeCutBlockGeometrys();
         this.envMap.dispose();
 
         this.renderer.dispose();
