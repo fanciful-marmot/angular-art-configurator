@@ -2,7 +2,7 @@ type Block = {
   baseHeight: number;
   width: number;
   depth: number;
-  cutAngle: number;
+  cutAngleBucket: number;
   turns: number; // Number of 90 degree rotations
   colorBucket: number;
   cutType: 'edge' | 'corner';
@@ -12,6 +12,7 @@ type BlockGrid = {
   width: number;
   height: number;
   colorBuckets: number[];
+  cutAngleBuckets: number[];
   blocks: Block[];
 };
 
@@ -40,6 +41,14 @@ const generateGrid = (gridConfig: GridConfig, blockConfig: BlockConfig): BlockGr
 
   const { borderBlurDistance, colorStops } = gridConfig;
 
+  const cutAngleBuckets = new Array(NUM_BUCKETS).fill(0)
+    .map((_, i) => {
+      const range = blockConfig.cutAngleRange;
+      const t = i / NUM_BUCKETS;
+
+      return Math.round(t * (range[1] - range[0]) + range[0]);
+    });
+
   const [gridWidth, gridHeight] = gridConfig.size;
   const blocks = new Array(gridWidth * gridHeight);
   for (let z = 0; z < gridHeight; z++) {
@@ -61,7 +70,7 @@ const generateGrid = (gridConfig: GridConfig, blockConfig: BlockConfig): BlockGr
       const block: Block = {
         baseHeight: random(blockConfig.baseHeightRange),
         colorBucket: Math.max(0, Math.min(colorIndex, colorStops.length - 1)),
-        cutAngle: random(blockConfig.cutAngleRange),
+        cutAngleBucket: Math.floor(Math.random() * NUM_BUCKETS),
         turns: Math.floor(Math.random() * 4),
         width: 1,
         depth: 1,
@@ -75,9 +84,11 @@ const generateGrid = (gridConfig: GridConfig, blockConfig: BlockConfig): BlockGr
   return {
     width: gridWidth,
     height: gridHeight,
+    cutAngleBuckets,
     colorBuckets: gridConfig.colorStops,
     blocks,
   };
 };
 
 export { generateGrid };
+export type { Block, BlockGrid };

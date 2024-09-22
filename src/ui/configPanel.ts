@@ -1,6 +1,7 @@
 import { Pane } from 'tweakpane';
 import * as EssentialsPlugin from '@tweakpane/plugin-essentials';
 import type { Renderer } from '../renderer';
+import { renderInstructions } from './instructions';
 
 const createConfigPanel = (renderer: Renderer) => {
   const gridConfig = {
@@ -84,6 +85,12 @@ const createConfigPanel = (renderer: Renderer) => {
 
   pane.addButton({ title: 'Configure' }).on('click', () => {
     configure();
+  });
+
+  pane.addButton({ title: 'Instructions' }).on('click', () => {
+    document.getElementById('instruction-overlay').classList.remove('hidden');
+
+    renderInstructions(renderer.grid);
   });
 
   // Set defaultConfig

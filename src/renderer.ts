@@ -16,7 +16,7 @@ import {
     OrbitControls
 } from 'three/examples/jsm/controls/OrbitControls.js';
 import { CutBlockGeometry } from './geometry/CutBlockGeometry';
-import { generateGrid, GridConfig, BlockConfig } from './gridGenerator';
+import { generateGrid, GridConfig, BlockConfig, BlockGrid } from './gridGenerator';
 
 class Renderer {
     scene: Scene;
@@ -28,6 +28,7 @@ class Renderer {
     blockMaterial: MeshPhysicalMaterial;
     blocks: Mesh<CutBlockGeometry, MeshPhysicalMaterial>[] = [];
     envMap: CubeTexture | null = null;
+    grid: BlockGrid;
 
     animationFrameId: number;
     needsRender: boolean = true;
@@ -133,6 +134,7 @@ class Renderer {
         this.disposeCutBlockGeometrys();
 
         const grid = generateGrid(gridConfig, blockConfig);
+        this.grid = grid;
 
         const [gridWidth, gridHeight] = gridConfig.size;
 
@@ -141,7 +143,7 @@ class Renderer {
         this.blocks = grid.blocks.map((block, i) => {
             const geometry = new CutBlockGeometry({
                 baseHeight: block.baseHeight,
-                cutAngle: block.cutAngle,
+                cutAngle: grid.cutAngleBuckets[block.cutAngleBucket],
                 cutType: block.cutType,
                 width: 1,
                 depth: 1,

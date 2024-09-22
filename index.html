@@ -4,6 +4,11 @@
 <head>
   <meta charset="UTF-8" />
   <title>Angular Art Configurator</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100;0,300;0,400;0,500;0,700;0,900;1,100;1,300;1,400;1,500;1,700;1,900&display=swap"
+    rel="stylesheet">
   <style>
     html,
     body {
@@ -25,11 +30,75 @@
       width: 100vw;
       height: 100vh;
     }
+
+    .roboto-regular {
+      font-family: "Roboto", sans-serif;
+      font-weight: 400;
+      font-style: normal;
+      font-size: 14px;
+    }
   </style>
+  <link href="./src/ui/instructions.css" rel="stylesheet" />
 </head>
 
 <body>
   <canvas id="canvas"></canvas>
+  <div id="instruction-overlay" class="roboto-regular hidden">
+    <div class="header">
+      <button class="close-button"
+        onclick="document.getElementById('instruction-overlay').classList.add('hidden');">X</button>
+    </div>
+    <div class="instruction-container">
+      <div class="part-list">
+        <h3>Parts List</h3>
+        <div>
+          <h4>Angle Counts</h4>
+          <div id="angle-counts">
+            10º: 100 (A)<br>
+            20º: 200 (B)<br>
+          </div>
+        </div>
+        <div>
+          <h4>Piece Counts</h4>
+          <div id="piece-counts">
+            10º <span class="swatch" style="background: red"></span>: 33 (A1)<br>
+            10º <span class="swatch" style="background: green"></span>: 33 (B1)<br>
+            10º <span class="swatch" style="background: blue"></span>: 34 (C1)<br><br>
+            20º <span class="swatch" style="background: red"></span>: 66 (A2)<br>
+            20º <span class="swatch" style="background: green"></span>: 67 (B2)<br>
+            20º <span class="swatch" style="background: blue"></span>: 67 (C2)<br>
+          </div>
+        </div>
+      </div>
+      <div id="grid" class="grid">
+        <div class="grid-row">
+          <div class="grid-cell">A1<br>N</div>
+          <div class="grid-cell">A1<br>N</div>
+          <div class="grid-cell">A1<br>N</div>
+        </div>
+        <div class="grid-row">
+          <div class="grid-cell">B1<br>N</div>
+          <div class="grid-cell">B1<br>N</div>
+          <div class="grid-cell">B1<br>N</div>
+        </div>
+        <div class="grid-row">
+          <div class="grid-cell">A1<br>N</div>
+          <div class="grid-cell">C1<br>N</div>
+          <div class="grid-cell">A1<br>N</div>
+        </div>
+        <div class="grid-row">
+          <div class="grid-cell">A1<br>N</div>
+          <div class="grid-cell">A2<br>E</div>
+          <div class="grid-cell">A3<br>N</div>
+        </div>
+        <div class="grid-row">
+          <div class="grid-cell">A1<br>N</div>
+          <div class="grid-cell">A1<br>N</div>
+          <div class="grid-cell">A1<br>N</div>
+        </div>
+      </div>
+    </div>
+  </div>
   <script type="text/javascript" src="dist/main.js"></script>
 </body>
 

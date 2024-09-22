@@ -1,0 +1,81 @@
+#instruction-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: calc(100vw - 40px);
+  height: calc(100vh - 40px);
+  padding: 10px;
+  margin: 10px;
+  border-radius: 5px;
+  background: rgba(255, 255, 255, 0.9);
+
+  overflow-y: scroll;
+}
+
+.header {
+  margin-bottom: 10px;
+}
+
+.instruction-container {
+  display: flex;
+  flex-direction: row;
+}
+
+.part-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.grid {
+  display: flex;
+  flex-grow: 1;
+  flex-direction: column;
+  margin: 4px;
+}
+
+.grid-row {
+  display: flex;
+  flex-grow: 0;
+  flex-shrink: 0;
+  flex-direction: row;
+}
+
+.grid-cell {
+  width: 25px;
+  height: 25px;
+  font-size: 9px;
+  line-height: 0.9;
+  box-sizing: border-box;
+  border: 1px solid black;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.swatch {
+  width: 12px;
+  height: 12px;
+  box-sizing: border-box;
+  border: black solid 1px;
+  display: inline-block;
+}
+
+.close-button {
+  width: 25px;
+  height: 25px;
+  border-radius: 25px;
+  background: white;
+  border-color: black;
+  color: black;
+  border-width: 1px;
+}
+
+.close-button:hover {
+  border-color: gray;
+  color: gray;
+  cursor: pointer;
+}
+
+.hidden {
+  display: none;
+}
